@@ -1,20 +1,27 @@
-modules = ["nodejs-24", "python-base-3.13"]
+modules = ["python-3.14"]
+run = "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+[nix]
+channel = "stable-24.05"
+
+[env]
+PYTHONPATH = "."
 
 [deployment]
-router = "application"
+run = ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 8000"]
 deploymentTarget = "autoscale"
 
-[deployment.postBuild]
-args = ["pnpm", "store", "prune"]
-env = { "CI" = "true" }
+# Instructions for Replit AI Agent & Assistant
+[ai]
+system_prompt = """
+You are working on 'Jarvis Controller', a modular dual-engine FastAPI backend.
 
-[workflows]
-runButton = "Project"
-
-[agent]
-stack = "PNPM_WORKSPACE"
-expertMode = true
-
-[postMerge]
-path = "scripts/post-merge.sh"
-timeoutMs = 20000
+CRITICAL RULES:
+1. TOKEN EFFICIENCY: Provide direct, concise responses. Do not write introductory or closing pleasantries.
+2. NO CODE DUPLICATION: When editing existing files, output only the modified code block or function unless asked for the entire file.
+3. ARCHITECTURE COMPLIANCE:
+   - Dynamic Router: app/main.py auto-discovers routers in app/modules/<name>/router.py.
+   - Module Isolation: Modules inside app/modules/ MUST NEVER import from each other.
+   - Dual-Engine LLM: Fast tasks go to Groq (llama-3.3-70b-versatile), heavy/multimodal tasks go to Gemini (gemini-2.0-flash).
+   - Auth Guard: All module routers require `dependencies=[Depends(verify_api_key)]`.
+"""

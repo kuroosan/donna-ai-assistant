@@ -1,45 +1,74 @@
-# [Project name]
+# Jarvis Controller — Replit Workspace Context
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+## System Architecture
+Jarvis Controller is a zero-touch, modular FastAPI personal assistant engine designed for low-memory environments and dual-engine AI processing.
 
-## Run & Operate
+┌─────────────────┐      ┌─────────────────────────┐      ┌─────────────────┐
+│ Client / Web    ├─────►│ FastAPI (app/main.py)   ├─────►│ Groq API        │
+└─────────────────┘      │ Dynamic Router Engine   │      │ (Fast LLM/STT)  │
+└────────────┬────────────┘      └─────────────────┘
+│                   ┌─────────────────┐
+├──────────────────►│ Gemini API      │
+│                   │ (Heavy/Vision)  │
+│                   └─────────────────┘
+│                   ┌─────────────────┐
+└──────────────────►│ n8n Webhooks    │
+│ (Automations)   │
+└─────────────────┘
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+## Directory Map
+```text
+.
+├── app/
+│   ├── core/
+│   │   ├── config.py         # Pydantic BaseSettings loading API keys & secrets
+│   │   ├── security.py       # Constant-time X-API-Key verification
+│   │   ├── llm.py            # Async Groq + Gemini unified client
+│   │   └── n8n.py            # Async webhook dispatcher to n8n engine
+│   ├── modules/              # Pluggable feature modules
+│   │   ├── jobs/             # POST /api/jobs/tailor
+│   │   ├── travel/           # POST /api/travel/plan
+│   │   └── voice/            # POST /api/voice/transcribe, /api/voice/intent
+│   └── main.py               # Dynamic importlib module scanner
+├── .replit                   # Replit runtime and agent instructions
+├── replit.md                 # System context documentation
+└── requirements.txt          # Dependencies
+Module Development Contract
+When adding or modifying a module in app/modules/<module_name>/:
 
-## Stack
+__init__.py: Must be empty.
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+router.py: Must expose a router named router:
+router = APIRouter(dependencies=[Depends(verify_api_key)])
 
-## Where things live
+schemas.py: Pydantic v2 schemas. Every response model must include module: str = "<module_name>".
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+service.py: Business logic using @staticmethod async methods. No direct route handling or FastAPI imports.
 
-## Architecture decisions
+Environment Secrets Required
+Set these key-value pairs in Replit Tools > Secrets:
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+GROQ_API_KEY: Groq API authorization key.
 
-## Product
+GEMINI_API_KEY: Google Gemini API key.
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+API_SECRET_KEY: Master secret key for X-API-Key header authentication.
 
-## User preferences
+N8N_WEBHOOK_BASE_URL: Base URL for n8n execution triggers.
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
 
-## Gotchas
+---
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+### 3. `requirements.txt`
 
-## Pointers
+Add this streamlined `requirements.txt` to ensure Replit installs all required dependencies cleanly:
 
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+```text
+fastapi>=0.110.0
+uvicorn[standard]>=0.28.0
+pydantic>=2.6.0
+pydantic-settings>=2.2.0
+httpx>=0.27.0
+google-genai>=0.1.0
+python-multipart>=0.0.9
+uvloop>=0.19.0; sys_platform != "win32"
