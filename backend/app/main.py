@@ -42,7 +42,12 @@ async def chat(request: ChatRequest) -> ChatResponse:
         response = await groq_client.chat(message)
     except httpx.HTTPStatusError as error:
         status_code = error.response.status_code
-        logger.error("chat_provider_http_error", status_code=status_code)
+        logger.error(
+            "chat_provider_http_error",
+            status_code=status_code,
+            request_url=str(error.request.url),
+            provider_detail=error.response.text[:300],
+        )
         raise HTTPException(
             status_code=502,
             detail=f"Chat provider returned HTTP {status_code}",
