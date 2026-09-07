@@ -167,7 +167,7 @@ function App() {
     if (target) addActivity('Note removed', target.title, 'slate');
   };
 
-  const respondToCommand = (text: string) => {
+  const respondToCommand = async (text: string) => {
     const clean = text.trim();
     if (!clean) return;
     const time = nowLabel();
@@ -191,7 +191,21 @@ function App() {
       setHelpOpen(true);
       response = 'I opened the local command guide for you.';
     }
-    window.setTimeout(() => setChat((current) => [...current, { id: `chat-${Date.now()}-reply`, role: 'assistant', text: response, time: nowLabel() }]), 180);
+    if (!lower.startsWith('add task ') && !lower.startsWith('note ') && !(lower.includes('show') && lower.includes('task')) && !lower.includes('help')) {
+      try {
+        const result = await fetch(`${API_BASE_URL}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: clean }),
+        });
+        if (!result.ok) throw new Error('Chat request failed');
+        const data = await result.json() as { message?: string };
+        response = data.message || 'The assistant returned an empty response.';
+      } catch {
+        response = 'I could not reach the assistant service. Please try again.';
+      }
+    }
+    setChat((current) => [...current, { id: `chat-${Date.now()}-reply`, role: 'assistant', text: response, time: nowLabel() }]);
   };
 
   const startListening = () => {
