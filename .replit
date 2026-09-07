@@ -26,9 +26,5 @@ CRITICAL RULES:
    - Auth Guard: All module routers require `dependencies=[Depends(verify_api_key)]`.
 """
 
-[[ports]]
-localPort = 8080
-externalPort = 80
-
 [workflows]
 runButton = "Project"
