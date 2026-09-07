@@ -1,4 +1,4 @@
-modules = ["python-3.14"]
+modules = ["python-3.14", "nodejs-24"]
 run = "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
 [nix]
@@ -25,3 +25,7 @@ CRITICAL RULES:
    - Dual-Engine LLM: Fast tasks go to Groq (llama-3.3-70b-versatile), heavy/multimodal tasks go to Gemini (gemini-2.0-flash).
    - Auth Guard: All module routers require `dependencies=[Depends(verify_api_key)]`.
 """
+
+[[ports]]
+localPort = 8080
+externalPort = 80

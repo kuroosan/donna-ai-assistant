@@ -1,0 +1,1 @@
+- [Artifact publishing](artifact-publishing.md) — production artifact builds may not have `pnpm`; use the artifact's direct Node build entrypoint when configuring publish.
