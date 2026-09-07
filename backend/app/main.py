@@ -1,3 +1,5 @@
+import httpx
+import structlog
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
@@ -8,6 +10,7 @@ except ImportError:
 
 
 app = FastAPI(title="Donna AI Assistant")
+logger = structlog.get_logger(__name__)
 
 
 class ChatRequest(BaseModel):
@@ -37,7 +40,18 @@ async def chat(request: ChatRequest) -> ChatResponse:
 
     try:
         response = await groq_client.chat(message)
+    except httpx.HTTPStatusError as error:
+        status_code = error.response.status_code
+        logger.error("chat_provider_http_error", status_code=status_code)
+        raise HTTPException(
+            status_code=502,
+            detail=f"Chat provider returned HTTP {status_code}",
+        ) from error
+    except httpx.RequestError as error:
+        logger.error("chat_provider_request_error", error_type=type(error).__name__)
+        raise HTTPException(status_code=502, detail="Chat provider request failed") from error
     except Exception as error:
+        logger.error("chat_provider_unexpected_error", error_type=type(error).__name__)
         raise HTTPException(status_code=502, detail="Chat provider request failed") from error
 
     return ChatResponse(message=response.content, model=response.model)
