@@ -38,6 +38,8 @@ const STORAGE = {
   chat: 'jarvis-controller:chat',
 };
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/, '');
+
 const nowLabel = () =>
   new Intl.DateTimeFormat('en', { hour: 'numeric', minute: '2-digit' }).format(new Date());
 
@@ -84,12 +86,28 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [listening, setListening] = useState(false);
+  const [backendOnline, setBackendOnline] = useState(false);
   const commandRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { window.localStorage.setItem(STORAGE.tasks, JSON.stringify(tasks)); }, [tasks]);
   useEffect(() => { window.localStorage.setItem(STORAGE.notes, JSON.stringify(notes)); }, [notes]);
   useEffect(() => { window.localStorage.setItem(STORAGE.activity, JSON.stringify(activity)); }, [activity]);
   useEffect(() => { window.localStorage.setItem(STORAGE.chat, JSON.stringify(chat)); }, [chat]);
+  useEffect(() => {
+    let active = true;
+    fetch(`${API_BASE_URL}/healthz`)
+      .then((response) => {
+        if (!response.ok) throw new Error('Backend health check failed');
+        return response.json() as Promise<{ status?: string }>;
+      })
+      .then((health) => {
+        if (active) setBackendOnline(health.status === 'ok');
+      })
+      .catch(() => {
+        if (active) setBackendOnline(false);
+      });
+    return () => { active = false; };
+  }, []);
 
   const openTasks = useMemo(() => tasks.filter((task) => !task.done), [tasks]);
   const completedTasks = tasks.length - openTasks.length;
@@ -240,7 +258,7 @@ function App() {
               <div className="md:hidden"><span className="text-sm font-bold tracking-tight">JARVIS</span></div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="hidden items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card)/.6)] px-3 py-1.5 sm:flex"><span className="signal-dot h-1.5 w-1.5 rounded-full bg-[hsl(var(--accent))]" /><span className="mono text-[10px] text-[hsl(var(--muted-foreground))]">STORED LOCALLY</span></div>
+              <div className="hidden items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card)/.6)] px-3 py-1.5 sm:flex"><span className={`signal-dot h-1.5 w-1.5 rounded-full ${backendOnline ? 'bg-[hsl(var(--accent))]' : 'bg-[hsl(var(--muted-foreground))]'}`} /><span className="mono text-[10px] text-[hsl(var(--muted-foreground))]">{backendOnline ? 'API CONNECTED' : 'LOCAL MODE'}</span></div>
               <button className="rounded-lg p-2 text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--secondary))] hover:text-[hsl(var(--foreground))]" onClick={() => setHelpOpen(true)} aria-label="Open help"><HelpCircle size={18} /></button>
               <button className="rounded-lg p-2 text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--secondary))] hover:text-[hsl(var(--foreground))]" onClick={() => setSettingsOpen(true)} aria-label="Open settings"><Settings size={18} /></button>
               <div className="ml-1 grid h-8 w-8 place-items-center rounded-full border border-[hsl(var(--primary)/.45)] bg-[hsl(var(--primary)/.12)] mono text-[11px] font-medium text-[hsl(var(--primary))]">OP</div>
