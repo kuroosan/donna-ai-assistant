@@ -5,7 +5,7 @@ WORKDIR /workspace
 RUN corepack enable
 
 COPY . .
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --allow-build=esbuild
 
 ENV NODE_ENV=production
 ENV PORT=4173
