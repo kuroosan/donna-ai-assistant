@@ -35,7 +35,7 @@ class GroqClient:
     def _get_json_client(self) -> httpx.AsyncClient:
         if self._json_client is None or self._json_client.is_closed:
             self._json_client = httpx.AsyncClient(
-                base_url=settings.GROQ_BASE_URL,
+                base_url=f"{settings.GROQ_BASE_URL.rstrip('/')}/",
                 headers={
                     "Authorization": f"Bearer {settings.GROQ_API_KEY}",
                     "Content-Type": "application/json",
@@ -62,7 +62,7 @@ class GroqClient:
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
-        raw = await self._post_json_with_retry("/chat/completions", payload)
+        raw = await self._post_json_with_retry("chat/completions", payload)
         return self._parse_chat_response(raw)
 
     async def transcribe(
@@ -78,12 +78,12 @@ class GroqClient:
         max_retries = settings.GROQ_MAX_RETRIES
         for attempt in range(max_retries + 1):
             async with httpx.AsyncClient(
-                base_url=settings.GROQ_BASE_URL,
+                base_url=f"{settings.GROQ_BASE_URL.rstrip('/')}/",
                 headers={"Authorization": f"Bearer {settings.GROQ_API_KEY}"},
                 timeout=httpx.Timeout(120.0, read=120.0),
             ) as client:
                 response = await client.post(
-                    "/audio/transcriptions",
+                    "audio/transcriptions",
                     data=data,
                     files={
                         "file": (
