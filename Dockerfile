@@ -11,8 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend contents into /app
-COPY backend/ ./app/
+# Copy backend contents into /app so app.main resolves from PYTHONPATH=/app
+COPY backend/ ./
 
 EXPOSE 8000
 
