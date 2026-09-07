@@ -95,18 +95,24 @@ function App() {
   useEffect(() => { window.localStorage.setItem(STORAGE.chat, JSON.stringify(chat)); }, [chat]);
   useEffect(() => {
     let active = true;
-    fetch(`${API_BASE_URL}/healthz`)
-      .then((response) => {
+
+    const checkBackend = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/healthz`, { cache: 'no-store' });
         if (!response.ok) throw new Error('Backend health check failed');
-        return response.json() as Promise<{ status?: string }>;
-      })
-      .then((health) => {
+        const health = await response.json() as { status?: string };
         if (active) setBackendOnline(health.status === 'ok');
-      })
-      .catch(() => {
+      } catch {
         if (active) setBackendOnline(false);
-      });
-    return () => { active = false; };
+      }
+    };
+
+    void checkBackend();
+    const interval = window.setInterval(checkBackend, 10_000);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
   }, []);
 
   const openTasks = useMemo(() => tasks.filter((task) => !task.done), [tasks]);
