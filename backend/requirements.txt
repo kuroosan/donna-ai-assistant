@@ -7,3 +7,8 @@ pydantic-settings==2.6.1
 python-multipart==0.0.17
 structlog==24.4.0
 python-dotenv==1.0.1
+google-generativeai
+pyautogui
+pillow
+pyperclip
+websockets

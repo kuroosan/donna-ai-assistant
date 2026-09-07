@@ -1,14 +1,14 @@
 modules = ["python-3.14", "nodejs-24"]
-run = "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+run = "cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
 [nix]
 channel = "stable-24.05"
 
 [env]
-PYTHONPATH = "."
+PYTHONPATH = "backend"
 
 [deployment]
-run = ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+run = ["sh", "-c", "cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
 deploymentTarget = "autoscale"
 
 # Instructions for Replit AI Agent & Assistant

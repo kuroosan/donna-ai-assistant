@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
     GROQ_MAX_RETRIES: int = 3
     GROQ_RETRY_BASE_DELAY: float = 2.0
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-2.0-flash"
+    N8N_WEBHOOK_BASE_URL: str = ""
+    N8N_TIMEOUT_SECONDS: float = 30.0
+    DESKTOP_AUTOMATION_ENABLED: bool = False
     MASTER_RESUME: str = ""
     API_SECRET_KEY: str
     ALLOWED_ORIGINS: str
@@ -64,6 +69,14 @@ class Settings(BaseSettings):
     @property
     def is_development(self) -> bool:
         return self.APP_ENV == "development"
+
+    @property
+    def is_n8n_configured(self) -> bool:
+        return bool(self.N8N_WEBHOOK_BASE_URL.strip())
+
+    @property
+    def is_gemini_configured(self) -> bool:
+        return bool(self.GEMINI_API_KEY.strip())
 
 
 def _load_settings() -> Settings:

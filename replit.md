@@ -1,74 +1,64 @@
-# Jarvis Controller — Replit Workspace Context
+# Donna AI Assistant
 
-## System Architecture
-Jarvis Controller is a zero-touch, modular FastAPI personal assistant engine designed for low-memory environments and dual-engine AI processing.
+Donna is a modular FastAPI assistant backend designed for Replit and other low-memory environments.
 
-┌─────────────────┐      ┌─────────────────────────┐      ┌─────────────────┐
-│ Client / Web    ├─────►│ FastAPI (app/main.py)   ├─────►│ Groq API        │
-└─────────────────┘      │ Dynamic Router Engine   │      │ (Fast LLM/STT)  │
-└────────────┬────────────┘      └─────────────────┘
-│                   ┌─────────────────┐
-├──────────────────►│ Gemini API      │
-│                   │ (Heavy/Vision)  │
-│                   └─────────────────┘
-│                   ┌─────────────────┐
-└──────────────────►│ n8n Webhooks    │
-│ (Automations)   │
-└─────────────────┘
+## Backend Structure
 
-## Directory Map
 ```text
-.
+backend/
 ├── app/
 │   ├── core/
-│   │   ├── config.py         # Pydantic BaseSettings loading API keys & secrets
-│   │   ├── security.py       # Constant-time X-API-Key verification
-│   │   ├── llm.py            # Async Groq + Gemini unified client
-│   │   └── n8n.py            # Async webhook dispatcher to n8n engine
-│   ├── modules/              # Pluggable feature modules
-│   │   ├── jobs/             # POST /api/jobs/tailor
-│   │   ├── travel/           # POST /api/travel/plan
-│   │   └── voice/            # POST /api/voice/transcribe, /api/voice/intent
-│   └── main.py               # Dynamic importlib module scanner
-├── .replit                   # Replit runtime and agent instructions
-├── replit.md                 # System context documentation
-└── requirements.txt          # Dependencies
-Module Development Contract
-When adding or modifying a module in app/modules/<module_name>/:
+│   │   ├── config.py       # Environment-backed application settings
+│   │   ├── llm.py          # Groq client for chat and speech-to-text
+│   │   ├── n8n.py          # Async n8n webhook client
+│   │   └── security.py     # API key verification
+│   ├── main.py              # FastAPI application entry point
+│   └── modules/             # Feature modules as they are added
+└── requirements.txt
+```
 
-__init__.py: Must be empty.
+The FastAPI entry point is `backend/app/main.py`, exposed as `app.main:app` when the working directory is `backend`.
 
-router.py: Must expose a router named router:
-router = APIRouter(dependencies=[Depends(verify_api_key)])
+## AI Engines
 
-schemas.py: Pydantic v2 schemas. Every response model must include module: str = "<module_name>".
+The backend uses a dual-engine strategy:
 
-service.py: Business logic using @staticmethod async methods. No direct route handling or FastAPI imports.
+- Groq handles fast conversational tasks and speech-to-text.
+- Gemini handles heavier reasoning and vision tasks.
 
-Environment Secrets Required
-Set these key-value pairs in Replit Tools > Secrets:
+## Module Contract
 
-GROQ_API_KEY: Groq API authorization key.
+Each module under `app/modules/<name>/` follows these rules:
 
-GEMINI_API_KEY: Google Gemini API key.
+- `router.py` must expose `router` and protect it with `verify_api_key`.
+- `schemas.py` response models must include `module: str`.
+- `service.py` contains business logic and uses `@staticmethod` methods.
+- Modules remain isolated and must not import from one another.
 
-API_SECRET_KEY: Master secret key for X-API-Key header authentication.
+## Automation Layer
 
-N8N_WEBHOOK_BASE_URL: Base URL for n8n execution triggers.
+The n8n integration dispatches module workflows through webhooks using `N8N_WEBHOOK_BASE_URL`. Workflow names are appended to that base URL, and requests use the configured timeout.
 
+## Planned Modules
 
----
+- Chat
+- Jobs
+- Travel
+- Voice
+- Desktop
 
-### 3. `requirements.txt`
+## Required Secrets
 
-Add this streamlined `requirements.txt` to ensure Replit installs all required dependencies cleanly:
+Configure these environment secrets:
 
-```text
-fastapi>=0.110.0
-uvicorn[standard]>=0.28.0
-pydantic>=2.6.0
-pydantic-settings>=2.2.0
-httpx>=0.27.0
-google-genai>=0.1.0
-python-multipart>=0.0.9
-uvloop>=0.19.0; sys_platform != "win32"
+- `GROQ_API_KEY`
+- `GEMINI_API_KEY`
+- `API_SECRET_KEY`
+- `ALLOWED_ORIGINS`
+- `N8N_WEBHOOK_BASE_URL`
+
+## Run
+
+```bash
+cd backend && uvicorn app.main:app
+```
