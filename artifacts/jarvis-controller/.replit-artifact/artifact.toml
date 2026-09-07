@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Jarvis Controller"
+description = "A personal AI command center for desktop-style voice and chat control, with persistent notes, tasks, and a calm activity workspace."
+version = "1.0.0"
+id = "artifacts/jarvis-controller"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19217
+
+[services.development]
+run = "pnpm --filter @workspace/jarvis-controller run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/jarvis-controller", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/jarvis-controller/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19217"
+BASE_PATH = "/"

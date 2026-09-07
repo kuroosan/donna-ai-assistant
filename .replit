@@ -29,3 +29,6 @@ CRITICAL RULES:
 [[ports]]
 localPort = 8080
 externalPort = 80
+
+[workflows]
+runButton = "Project"
